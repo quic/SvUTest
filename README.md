@@ -12,9 +12,9 @@ SvUTest is an attempt at a tool that helps designers write basic sanity checks o
 
 SvUTest is meant to be used by RTL design engineers to ensure the correctness of their designs across a known set of input patterns.
 
-## What SvUTest is not
+## UVM
 
-SvUTest is not a replacement of UVM. SvUTest is only recommended for small designs with a handful of input and output interfaces and a set of input workloads whose output is known.
+SvUTest is not meant to replace UVM. SvUTest is only recommended for small designs with a handful of input and output interfaces and a set of input workloads whose output is known. UVM would still be the go-to solution for large designs with complex stimuli.
 
 ## Requirements
 
