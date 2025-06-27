@@ -5,40 +5,45 @@
 /// Test case class passed through T_test_case. No ports
 module floatmul_test_top
     import floatmul_pkg::*;
-    import svutest_pkg::*;
 #(
     type T_test_case = bit
+)(
+    svutest_test_ctrl_if.target tc
 );
-    svutest_if_test_ctrl tc ();
+    svutest_dut_ctrl_if dc ();
     
-    svutest_if_valid_ready#(float32_t) i_a (tc.clk, tc.rst);
-    svutest_if_valid_ready#(float32_t) i_b (tc.clk, tc.rst);
-    svutest_if_valid_ready#(float32_t) i_o (tc.clk, tc.rst);
+    svutest_if_valid_ready#(float32_t) a (dc.clk, dc.rst);
+    svutest_if_valid_ready#(float32_t) b (dc.clk, dc.rst);
+    svutest_if_valid_ready#(float32_t) o (dc.clk, dc.rst);
+    
+    logic busy;
     
     // ---------------------------------------------------------------------- //
     
     floatmul u_fmul (
-        .clk        (tc.clk),
-        .rst        (tc.rst),
-        .busy       (tc.busy),
+        .clk        (dc.clk),
+        .rst        (dc.rst),
+        .busy       (busy),
         
-        .a_valid    (i_a.valid),
-        .a_payload  (i_a.payload),
-        .a_ready    (i_a.ready),
+        .a_valid    (a.valid),
+        .a_payload  (a.payload),
+        .a_ready    (a.ready),
         
-        .b_valid    (i_b.valid),
-        .b_payload  (i_b.payload),
-        .b_ready    (i_b.ready),
+        .b_valid    (b.valid),
+        .b_payload  (b.payload),
+        .b_ready    (b.ready),
         
-        .o_valid    (i_o.valid),
-        .o_payload  (i_o.payload),
-        .o_ready    (i_o.ready)
+        .o_valid    (o.valid),
+        .o_payload  (o.payload),
+        .o_ready    (o.ready)
     );
+    
+    always_comb dc.done = ~(a.valid | b.valid | o.valid | busy);
     
     // ---------------------------------------------------------------------- //
     
     initial begin
-        T_test_case test;
-        test = new(tc, i_a, i_b, i_o);
+        T_test_case test = new(tc, dc, a, b, o);
+        test.run();
     end
 endmodule

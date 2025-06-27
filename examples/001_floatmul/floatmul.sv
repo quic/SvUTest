@@ -28,12 +28,65 @@ module floatmul
     output float32_t    o_payload,
     input  logic        o_ready
 );
-    always_comb a_ready = o_ready & b_valid;
-    always_comb b_ready = o_ready & a_valid;
+    logic c_valid;
+    float32_t c_payload;
+    logic c_ready;
     
-    always_comb o_valid = a_valid & b_valid;
-    // Deliberately left unimplemented
-    always_comb o_payload = a_payload;
+    logic d_valid;
+    float32_t d_payload;
+    logic d_ready;
     
-    always_comb busy = o_valid;
+    // ---------------------------------------------------------------------- //
+    
+    // Pipeline a
+    always_comb a_ready = ~c_valid | c_ready;
+    
+    always_ff @(posedge clk, posedge rst) begin
+        if (rst) begin
+            c_valid <= 1'b0;
+        end else if (a_valid) begin
+            c_valid <= 1'b1;
+        end else if (c_ready) begin
+            c_valid <= 1'b0;
+        end
+    end
+    always_ff @(posedge clk, posedge rst) begin
+        if (rst) begin
+            c_payload <= '0;
+        end else if (a_valid & a_ready) begin
+            c_payload <= a_payload;
+        end
+    end
+    
+    // Pipeline b
+    always_comb b_ready = ~d_valid | d_ready;
+    
+    always_ff @(posedge clk, posedge rst) begin
+        if (rst) begin
+            d_valid <= 1'b0;
+        end else if (a_valid) begin
+            d_valid <= 1'b1;
+        end else if (d_ready) begin
+            d_valid <= 1'b0;
+        end
+    end
+    always_ff @(posedge clk, posedge rst) begin
+        if (rst) begin
+            d_payload <= '0;
+        end else if (a_valid & b_ready) begin
+            d_payload <= a_payload;
+        end
+    end
+    
+    // ---------------------------------------------------------------------- //
+    
+    always_comb c_ready = o_ready & d_valid;
+    always_comb d_ready = o_ready & c_valid;
+    
+    always_comb o_valid = c_valid & d_valid;
+    always_comb o_payload = c_payload;  // Deliberately left unimplemented
+    
+    // ---------------------------------------------------------------------- //
+    
+    always_comb busy = c_valid | d_valid;
 endmodule

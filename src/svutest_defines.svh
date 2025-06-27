@@ -8,6 +8,11 @@
 `define UTEST(test_top, test_case)                                          \
     test_top #(test_case) u_``test_top``_``test_case`` ();
 
+/// Instantiate test_case for test_top
+`define UTEST2(test_top, test_case)                                         \
+    svutest_dut_ctrl_if i_``test_case`` ();                                 \
+    test_top#(test_case) u_``test_top``_``test_case`` (i_``test_case``);
+
 /// Instatiate test_case for test_top with param
 /// test_top needs to support the extra compile-time param
 `define UTEST_PARAM(test_top, test_case, param)                             \

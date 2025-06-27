@@ -3,11 +3,63 @@
 
 /// Test control interface
 /// Instantiate this interface inside the test top and pass to the test_case
-/// Use clk, rst and busy to connect to DUT
-interface svutest_if_test_ctrl;
+/// Use clk, rst and done to connect to DUT
+interface svutest_test_ctrl_if;
+    bit start;
+    bit done;
+    
+    bit timeout;
+    bit unknown;
+    bit pass;
+    
+    modport driver (
+        output start,
+        input done,
+        input timeout,
+        input unknown,
+        input pass
+    );
+    
+    modport target (
+        input start,
+        output done,
+        output timeout,
+        output unknown,
+        output pass
+    );
+    
+    modport monitor (
+        input start,
+        input done,
+        input timeout,
+        input unknown,
+        input pass
+    );
+endinterface
+
+/// Test control interface
+interface svutest_dut_ctrl_if;
     logic clk;
     logic rst;
-    logic busy;
+    logic done;
+    
+    modport driver (
+        output clk,
+        output rst,
+        input done
+    );
+    
+    modport target (
+        input clk,
+        input rst,
+        output done
+    );
+    
+    modport monitor (
+        input clk,
+        input rst,
+        input done
+    );
 endinterface
 
 /// Continously driven data
@@ -96,7 +148,7 @@ interface svutest_if_valid_data
     );
 endinterface
 
-/// Valid ready protocol
+/// Valid-data-ready protocol
 interface svutest_if_valid_ready
 #(
     type T_payload = logic
