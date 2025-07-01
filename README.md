@@ -114,12 +114,12 @@ class floatmul_utest extends test_case;
     typedef virtual svutest_if_valid_ready#(float32_t) T_vif;
     typedef valid_ready_driver#(float32_t) T_driver;
     
-    typedef injector#(float32_t, T_vif, T_driver) T_sender_agent;
-    typedef extractor#(float32_t, T_vif, T_driver) T_target_agent;
+    typedef injector#(T_vif, T_driver) T_injector;
+    typedef extractor#(float32_t, T_vif, T_driver) T_extractor;
     
-    T_sender_agent m_a_agent;
-    T_sender_agent m_b_agent;
-    T_target_agent m_o_agent;
+    T_injector m_a_agent;
+    T_injector m_b_agent;
+    T_extractor m_o_agent;
     
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
@@ -131,9 +131,9 @@ class floatmul_utest extends test_case;
     );
         super.new(vif_test_ctrl, vif_dut_ctrl, $sformatf("fmul:%0s", test_case_name));
         
-        m_a_agent = T_sender_agent::create(vif_a);
-        m_b_agent = T_sender_agent::create(vif_b);
-        m_o_agent = T_target_agent::create(vif_o);
+        m_a_agent = T_injector::create(vif_a);
+        m_b_agent = T_injector::create(vif_b);
+        m_o_agent = T_extractor::create(vif_o);
         
         this.add_agent(m_a_agent);
         this.add_agent(m_b_agent);
