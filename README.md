@@ -114,8 +114,8 @@ class floatmul_utest extends test_case;
     typedef virtual svutest_if_valid_ready#(float32_t) T_vif;
     typedef valid_ready_driver#(float32_t) T_driver;
     
-    typedef sender_agent#(float32_t, T_vif, T_driver) T_sender_agent;
-    typedef target_agent#(float32_t, T_vif, T_driver) T_target_agent;
+    typedef injector#(float32_t, T_vif, T_driver) T_sender_agent;
+    typedef extractor#(float32_t, T_vif, T_driver) T_target_agent;
     
     T_sender_agent m_a_agent;
     T_sender_agent m_b_agent;
@@ -149,8 +149,8 @@ endclass
 4. ``validcount_readycount_driver``: Data vector with valid_count and ready_count. The number of transfers that happens on a cycle will be equal to min(valid_count, ready_count)
 
 The package also provides 3 different agent classes that can work with each of the above protocols:
-1. ``sender_agent``, which injects data into the DUT
-2. ``target_agent``, which drives response into the DUT, while also extracting output from the DUT
+1. ``injector``, which injects data into the DUT
+2. ``extractor``, which drives response into the DUT, while also extracting output from the DUT
 3. ``monitor_agent``, which only monitors an output interface of the DUT without prodiving any response
 
 An agent needs to be created per interface. The example above creates two sender agents and a target agent inside the class. An agent The agent classes accept 3 compile-time parameters:
@@ -159,7 +159,7 @@ An agent needs to be created per interface. The example above creates two sender
 3. The type of driver class that handles the required protocol for the interface
 The constructor of ``test_case`` must attach each agent to the test case by calling ``add_agent()`` method on each agent instance
 
-Once the agents are set up, the user needs to extend the base class for each test scenario and override two virtual functions ``test_case::populate()`` and ``test_case::check``. ``populate()`` is used to populate the input data for all the sender agents. The sender_agent class provides a function ``put()`` to pass a transaction to into an agent's internal queue. Any number of ``put()`` calls may be made from the ``populate`` function. The actual injection of the transactions to the DUT will be done later.
+Once the agents are set up, the user needs to extend the base class for each test scenario and override two virtual functions ``test_case::populate()`` and ``test_case::check``. ``populate()`` is used to populate the input data for all the sender agents. The injector class provides a function ``put()`` to pass a transaction to into an agent's internal queue. Any number of ``put()`` calls may be made from the ``populate`` function. The actual injection of the transactions to the DUT will be done later.
 
 The transactions emitted from the output channels of the DUT are collected by the target and monitor agents and populated into an internal queue called ``m_mon_queue``. This queue can be queried from the virtual function ``check()`` for correctness of output transactions. Two macros ``UTEST_ASSERT(expr)`` and ``UTEST_ASSERT_EQ(expr_lhs, expr_rhs)`` are provided in ``svutest_defines.svh`` to help the user with the line number and a failure count summary for the given test.
 

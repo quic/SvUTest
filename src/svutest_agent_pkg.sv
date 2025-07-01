@@ -22,7 +22,7 @@ package svutest_agent_pkg;
     endclass
     
     /// Injector for DUT input
-    class sender_agent #(
+    class injector #(
         type T_vif = bit,
         type T_driver = bit
     ) extends agent;
@@ -31,8 +31,8 @@ package svutest_agent_pkg;
         T_sender_packet m_queue [$];
         T_driver m_driver;
         
-        static function sender_agent#(T_vif, T_driver) create (T_vif vif);
-            sender_agent#(T_vif, T_driver) ag;
+        static function injector#(T_vif, T_driver) create (T_vif vif);
+            injector#(T_vif, T_driver) ag;
             
             ag = new(vif);
             
@@ -63,7 +63,7 @@ package svutest_agent_pkg;
     
     /// Sinks DUT output transactions
     /// Also provides required back-pressure
-    class target_agent #(
+    class extractor #(
         type T_payload = bit,
         type T_vif = bit,
         type T_driver = bit
@@ -80,8 +80,8 @@ package svutest_agent_pkg;
         T_target_packet m_drv_queue [$];
         T_driver m_driver;
         
-        static function target_agent#(T_payload, T_vif, T_driver) create (T_vif vif);
-            target_agent#(T_payload, T_vif, T_driver) ag;
+        static function extractor#(T_payload, T_vif, T_driver) create (T_vif vif);
+            extractor#(T_payload, T_vif, T_driver) ag;
             
             ag = new(vif);
             
