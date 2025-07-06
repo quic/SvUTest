@@ -30,9 +30,9 @@ package floatmul_test_pkg;
             m_b_injector = new(vif_b);
             m_o_extractor = new(vif_o);
             
-            this.add_agent(m_a_injector);
-            this.add_agent(m_b_injector);
-            this.add_agent(m_o_extractor);
+            this.add(m_a_injector);
+            this.add(m_b_injector);
+            this.add(m_o_extractor);
         endfunction
     endclass
     

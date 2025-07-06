@@ -14,7 +14,7 @@ module regress_top;
     floatmul_test_top#(floatmul_test2_012_012) u_floatmul_test2_012_012 (i_floatmul_test2_012_012);
     
     initial begin
-        test_list list = test_list::create();
+        test_list list = new();
         
         // Replace with your tool's wave-dumping commands
         if ($test$plusargs("wave")) begin

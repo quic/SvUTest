@@ -35,7 +35,7 @@ package svutest_test_pkg;
             m_protocol_queue = {};
         endfunction
         
-        function void add_agent (protocol p);
+        function void add (protocol p);
             m_protocol_queue.push_back(p);
         endfunction
         

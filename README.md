@@ -106,89 +106,76 @@ endmodule
 
 A test_top is built once per DUT.
 
-### Test Case class
+### ``test_case`` class
 
 Once the test_top is built, a ``test_case`` class that drives the input interfaces and evaluates the output transactions needs to be created by deriving from ``svutest_pkg::test_case``. This class acts as a base class for all test sequences for the current DUT. ``svutest_pkg::test_case`` class drives the clock and reset to the DUT while monitoring the ``done`` in addition to managing the input and output interfaces of the DUT. The constructor of ``svutest_pkg::test_case`` accepts the svutest_test_ctrl_if interface, svutest_dut_ctrl_if interface and a test name as constructor arguments:
 
 ```
 class floatmul_utest extends test_case;
-    typedef virtual svutest_req_payload_rsp_if#(float32_t) T_vif;
-    typedef valid_ready_driver#(float32_t) T_driver;
-    
-    typedef injector#(T_vif, T_driver) T_injector;
-    typedef extractor#(float32_t, T_vif, T_driver) T_extractor;
-    
-    T_injector m_a_agent;
-    T_injector m_b_agent;
-    T_extractor m_o_agent;
+    valid_ready_injector#(float32_t) m_a_injector;
+    valid_ready_injector#(float32_t) m_b_injector;
+    valid_ready_extractor#(float32_t) m_o_extractor;
     
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
         virtual svutest_dut_ctrl_if vif_dut_ctrl,
-        T_vif vif_a,
-        T_vif vif_b,
-        T_vif vif_o,
+        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
+        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+        virtual svutest_req_payload_rsp_if#(float32_t).target vif_o,
         string test_case_name
     );
         super.new(vif_test_ctrl, vif_dut_ctrl, $sformatf("fmul:%0s", test_case_name));
         
-        m_a_agent = T_injector::create(vif_a);
-        m_b_agent = T_injector::create(vif_b);
-        m_o_agent = T_extractor::create(vif_o);
+        m_a_injector = new(vif_a);
+        m_b_injector = new(vif_b);
+        m_o_extractor = new(vif_o);
         
-        this.add_agent(m_a_agent);
-        this.add_agent(m_b_agent);
-        this.add_agent(m_o_agent);
+        this.add(m_a_agent);
+        this.add(m_b_agent);
+        this.add(m_o_agent);
     endfunction
 endclass
 ```
 
-``sv_utest_pkg`` provides drivers for 4 different interface protocols:
-1. ``data_driver``: Simple data without any qualifier
-2. ``valid_data_driver``: Data with valid
-3. ``valid_ready_driver``: Data with valid and ready
-4. ``validcount_readycount_driver``: Data vector with valid_count and ready_count. The number of transfers that happens on a cycle will be equal to min(valid_count, ready_count)
+``sv_utest_pkg`` provides injectors and extractors for 2 different interface protocols:
+1. ``valid_data_injector``: Data with valid
+1. ``valid_ready_injector``: Data with valid and ready
 
-The package also provides 3 different agent classes that can work with each of the above protocols:
-1. ``injector``, which injects data into the DUT
-2. ``extractor``, which drives response into the DUT, while also extracting output from the DUT
-3. ``monitor_agent``, which only monitors an output interface of the DUT without prodiving any response
+An injector or extractor needs to be created per interface, depending on the direction of the transaction. The example above creates two injectors and an extractor inside the class. The constructor of ``test_case`` must attach each injector/extractor to the test case by calling ``add()`` method.
 
-An agent needs to be created per interface. The example above creates two sender agents and a target agent inside the class. An agent The agent classes accept 3 compile-time parameters:
-1. The type of the data payload of the interface // TODO: This should go
-2. The virtual type of the SV interface
-3. The type of driver class that handles the required protocol for the interface
-The constructor of ``test_case`` must attach each agent to the test case by calling ``add_agent()`` method on each agent instance
+Once the injectors and extractors are set up, the user needs to extend the base class for each test scenario and override two virtual functions ``test_case::populate()`` and ``test_case::check()``. ``populate()`` is used to populate the input data for all the injectors. The injector class provides a function ``put()`` to push a transaction its internal queue. Any number of ``put()`` calls may be made from the ``populate`` function. The actual injection of the transactions to the DUT will be done later.
 
-Once the agents are set up, the user needs to extend the base class for each test scenario and override two virtual functions ``test_case::populate()`` and ``test_case::check``. ``populate()`` is used to populate the input data for all the sender agents. The injector class provides a function ``put()`` to pass a transaction to into an agent's internal queue. Any number of ``put()`` calls may be made from the ``populate`` function. The actual injection of the transactions to the DUT will be done later.
-
-The transactions emitted from the output channels of the DUT are collected by the target and monitor agents and populated into an internal queue called ``m_mon_queue``. This queue can be queried from the virtual function ``check()`` for correctness of output transactions. Two macros ``UTEST_ASSERT(expr)`` and ``UTEST_ASSERT_EQ(expr_lhs, expr_rhs)`` are provided in ``svutest_defines.svh`` to help the user with the line number and a failure count summary for the given test.
+The transactions emitted from the output channels of the DUT are collected by the extractor and populated into an internal queue. This queue can be accessed from the virtual function ``check()`` using ``get_queue()`` method and queried for correctness of output transactions. Two macros ``UTEST_ASSERT(expr)`` and ``UTEST_ASSERT_EQ(expr_lhs, expr_rhs)`` are provided in ``svutest_defines.svh`` to help the user with the line number and a failure count summary.
 
 The following snippet shows how a simple test scenario with one transaction on each input interface:
 ```
 class floatmul_test2_0_0 extends floatmul_utest;
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
-        virtual svutest_dut_ctrl_if vif_dut_ctrl,
-        T_vif vif_a,
-        T_vif vif_b,
-        T_vif vif_o
+        virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
+        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
+        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+        virtual svutest_req_payload_rsp_if#(float32_t).target vif_o
     );
         super.new(vif_test_ctrl, vif_dut_ctrl, vif_a, vif_b, vif_o, "0_0");
     endfunction
     
     function void populate ();
-        m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: '0, mantissa: '0 } });
-        m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: '0, mantissa: '0 } });
+        m_a_injector.put('{ sign: 1'b0, exponent: '0, mantissa: '0 });
+        m_b_injector.put('{ sign: 1'b0, exponent: '0, mantissa: '0 });
     endfunction
     
     function void check ();
-        `UTEST_ASSERT_EQ($size(m_o_agent.m_mon_queue), 1)
+        float32_t queue [$] = m_o_extractor.get_queue();
         
-        `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[0].payload, '1)
+        `UTEST_ASSERT_EQ(queue.size(), 1)
+        
+        `UTEST_ASSERT_EQ(queue[0], '1)
     endfunction
 endclass
 ```
+
+### Regression top module
 
 Once the test_top and test_cases are set up, we need to populate a top module where we do the following:
 1. Create an instance of ``svutest_test_ctrl_if`` and the ``test_top`` for each test scenario
@@ -207,7 +194,7 @@ module regress_top;
     floatmul_test_top#(floatmul_test2_012_012) u_floatmul_test2_012_012 (i_floatmul_test2_012_012);
     
     initial begin
-        test_list list = test_list::create();
+        test_list list = new();
         
         list.add(i_floatmul_test2_0_0);
         list.add(i_floatmul_test2_012_012);
