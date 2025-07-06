@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
 package svutest_pkg;
-    import svutest_driver_pkg::*;
     import svutest_agent_pkg::*;
     import svutest_test_pkg::*;
     
-    export svutest_driver_pkg::*;
     export svutest_agent_pkg::*;
     export svutest_test_pkg::*;
     

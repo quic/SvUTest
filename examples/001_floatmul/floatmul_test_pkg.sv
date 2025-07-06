@@ -4,7 +4,6 @@
 `include "svutest_defines.svh"
 
 package floatmul_test_pkg;
-    import svutest_driver_pkg::*;
     import svutest_agent_pkg::*;
     import svutest_test_pkg::*;
     import svutest_pkg::*;
@@ -12,33 +11,27 @@ package floatmul_test_pkg;
     
     /// Base class for all test-cases of floatmul
     class floatmul_utest extends test_case;
-        typedef virtual svutest_if_valid_ready#(float32_t) T_vif;
-        typedef valid_ready_driver#(float32_t) T_driver;
-        
-        typedef injector#(T_vif, T_driver) T_injector;
-        typedef extractor#(float32_t, T_vif, T_driver) T_extractor;
-        
-        T_injector m_a_agent;
-        T_injector m_b_agent;
-        T_extractor m_o_agent;
+        valid_ready_injector#(float32_t) m_a_injector;
+        valid_ready_injector#(float32_t) m_b_injector;
+        valid_ready_extractor#(float32_t) m_o_extractor;
         
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
-            virtual svutest_dut_ctrl_if vif_dut_ctrl,
-            T_vif vif_a,
-            T_vif vif_b,
-            T_vif vif_o,
+            virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
+            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
+            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+            virtual svutest_req_payload_rsp_if#(float32_t).target vif_o,
             string test_case_name
         );
             super.new(vif_test_ctrl, vif_dut_ctrl, $sformatf("fmul:%0s", test_case_name));
             
-            m_a_agent = T_injector::create(vif_a);
-            m_b_agent = T_injector::create(vif_b);
-            m_o_agent = T_extractor::create(vif_o);
+            m_a_injector = new(vif_a);
+            m_b_injector = new(vif_b);
+            m_o_extractor = new(vif_o);
             
-            this.add_agent(m_a_agent);
-            this.add_agent(m_b_agent);
-            this.add_agent(m_o_agent);
+            this.add_agent(m_a_injector);
+            this.add_agent(m_b_injector);
+            this.add_agent(m_o_extractor);
         endfunction
     endclass
     
@@ -46,23 +39,25 @@ package floatmul_test_pkg;
     class floatmul_test2_0_0 extends floatmul_utest;
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
-            virtual svutest_dut_ctrl_if vif_dut_ctrl,
-            T_vif vif_a,
-            T_vif vif_b,
-            T_vif vif_o
+            virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
+            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
+            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+            virtual svutest_req_payload_rsp_if#(float32_t).target vif_o
         );
             super.new(vif_test_ctrl, vif_dut_ctrl, vif_a, vif_b, vif_o, "0_0");
         endfunction
         
         function void populate ();
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: '0, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: '0, mantissa: '0 } });
+            m_a_injector.put('{ sign: 1'b0, exponent: '0, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent: '0, mantissa: '0 });
         endfunction
         
         function void check ();
-            `UTEST_ASSERT_EQ($size(m_o_agent.m_mon_queue), 1)
+            float32_t queue [$] = m_o_extractor.get_queue();
             
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[0].payload, '1)
+            `UTEST_ASSERT_EQ(queue.size(), 1)
+            
+            `UTEST_ASSERT_EQ(queue[0], '1)
         endfunction
     endclass
     
@@ -74,48 +69,50 @@ package floatmul_test_pkg;
     class floatmul_test2_012_012 extends floatmul_utest;
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
-            virtual svutest_dut_ctrl_if vif_dut_ctrl,
-            T_vif vif_a,
-            T_vif vif_b,
-            T_vif vif_o
+            virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
+            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
+            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+            virtual svutest_req_payload_rsp_if#(float32_t).target vif_o
         );
             super.new(vif_test_ctrl, vif_dut_ctrl, vif_a, vif_b, vif_o, "012_012");
         endfunction
         
         function void populate ();
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent:  '0, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent:  '0, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent:  '0, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 127, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 127, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 127, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 128, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 128, mantissa: '0 } });
-            m_a_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 128, mantissa: '0 } });
+            m_a_injector.put('{ sign: 1'b0, exponent:  '0, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent:  '0, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent:  '0, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent: 127, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent: 127, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent: 127, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent: 128, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent: 128, mantissa: '0 });
+            m_a_injector.put('{ sign: 1'b0, exponent: 128, mantissa: '0 });
             
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent:  '0, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 127, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 128, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent:  '0, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 127, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 128, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent:  '0, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 127, mantissa: '0 } });
-            m_b_agent.put('{ valid: 1'b1, payload: '{ sign: 1'b0, exponent: 128, mantissa: '0 } });
+            m_b_injector.put('{ sign: 1'b0, exponent:  '0, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent: 127, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent: 128, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent:  '0, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent: 127, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent: 128, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent:  '0, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent: 127, mantissa: '0 });
+            m_b_injector.put('{ sign: 1'b0, exponent: 128, mantissa: '0 });
         endfunction
         
         function void check ();
-            `UTEST_ASSERT_EQ($size(m_o_agent.m_mon_queue), 9)
+            float32_t queue [$] = m_o_extractor.get_queue();
             
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[0].payload, float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[1].payload, float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[2].payload, float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[3].payload, float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[4].payload, float32_t'{ sign: 0, exponent: 127, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[5].payload, float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[6].payload, float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[7].payload, float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
-            `UTEST_ASSERT_EQ(m_o_agent.m_mon_queue[8].payload, float32_t'{ sign: 0, exponent: 129, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue.size(), 9)
+            
+            `UTEST_ASSERT_EQ(queue[0], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[1], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[2], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[3], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[4], float32_t'{ sign: 0, exponent: 127, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[5], float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[6], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[7], float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
+            `UTEST_ASSERT_EQ(queue[8], float32_t'{ sign: 0, exponent: 129, mantissa: 0 })
         endfunction
     endclass
 endpackage

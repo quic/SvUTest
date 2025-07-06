@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
 /// Test control interface
-/// Instantiate this interface inside the test top and pass to the test_case
-/// Use clk, rst and done to connect to DUT
 interface svutest_test_ctrl_if;
     bit start;
     bit done;
@@ -37,7 +35,9 @@ interface svutest_test_ctrl_if;
     );
 endinterface
 
-/// Test control interface
+/// DUT control interface
+/// Instantiate this interface inside the test top and pass to the test_case
+/// Use clk, rst and done to connect to DUT
 interface svutest_dut_ctrl_if;
     logic clk;
     logic rst;
@@ -148,22 +148,65 @@ interface svutest_if_valid_data
     );
 endinterface
 
-/// Valid-data-ready protocol
-interface svutest_if_valid_ready
+/// Request-payload-response interface
+interface svutest_req_payload_rsp_if
 #(
     type T_payload = logic
 )(
-    input  logic    clk,
-    input  logic    rst
+    input logic clk,
+    input logic rst
+);
+    logic       req;
+    T_payload   req_payload;
+    
+    logic       rsp;
+    
+    modport sender (
+        input  clk,
+        input  rst,
+        output req,
+        output req_payload,
+        input  rsp
+    );
+    
+    modport target (
+        input  clk,
+        input  rst,
+        input  req,
+        input  req_payload,
+        output rsp
+    );
+    
+    modport snoop (
+        input  clk,
+        input  rst,
+        input  req,
+        input  req_payload,
+        input  rsp
+    );
+endinterface
+
+/// Valid-data-ready protocol
+interface svutest_if_valid_ready
+#(
+    type T_payload       = logic,
+    bit  ACTIVE_HIGH_RST = 1'b1
+)(
+    input logic clk,
+    input logic rst
 );
     logic       valid;
     T_payload   payload;
     
     logic       ready;
     
-    logic       trans;
-    
-    always_comb trans = valid & ready;
+    task automatic delay ();
+        if (ACTIVE_HIGH_RST) begin
+            @(posedge clk iff !rst);
+        end else begin
+            @(posedge clk iff rst);
+        end
+    endtask
     
     task automatic sender_clear();
         valid <= 1'b0;
@@ -174,7 +217,11 @@ interface svutest_if_valid_ready
         valid <= 1'b1;
         payload <= p;
         
-        @(posedge clk iff (!rst && ready));
+        if (ACTIVE_HIGH_RST) begin
+            @(posedge clk iff (!rst && ready));
+        end else begin
+            @(posedge clk iff (rst && ready));
+        end
         
         sender_clear();
     endtask
@@ -184,7 +231,11 @@ interface svutest_if_valid_ready
     endtask
     
     task automatic target_monitor (output T_payload p);
-        @(posedge clk iff (!rst && valid && ready));
+        if (ACTIVE_HIGH_RST) begin
+            @(posedge clk iff (!rst && valid && ready));
+        end else begin
+            @(posedge clk iff (rst && valid && ready));
+        end
         
         p = payload;
     endtask
@@ -195,7 +246,6 @@ interface svutest_if_valid_ready
         output valid,
         output payload,
         input  ready,
-        input  trans,
         import sender_clear,
         import sender_drive
     );
@@ -206,7 +256,6 @@ interface svutest_if_valid_ready
         input  valid,
         input  payload,
         output ready,
-        input  trans,
         import target_clear,
         import target_monitor
     );
@@ -216,8 +265,7 @@ interface svutest_if_valid_ready
         input  rst,
         input  valid,
         input  payload,
-        input  ready,
-        input  trans
+        input  ready
     );
 endinterface
 

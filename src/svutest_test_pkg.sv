@@ -1,5 +1,7 @@
+// Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+// SPDX-License-Identifier: BSD-3-Clause-Clear
+
 package svutest_test_pkg;
-    import svutest_driver_pkg::*;
     import svutest_agent_pkg::*;
     
     /// Test case base class
@@ -11,7 +13,7 @@ package svutest_test_pkg;
         int unsigned m_alive_cycles;
         int unsigned m_timeout_threshold;
         
-        agent m_agent_queue [$];
+        protocol m_protocol_queue [$];
         
         int unsigned m_pass_count;
         int unsigned m_fail_count;
@@ -30,11 +32,11 @@ package svutest_test_pkg;
             m_test_name = test_name;
             m_alive_cycles = num_alive_cycles;
             m_timeout_threshold = timeout_threshold;
-            m_agent_queue = {};
+            m_protocol_queue = {};
         endfunction
         
-        function void add_agent (agent ag);
-            m_agent_queue.push_back(ag);
+        function void add_agent (protocol p);
+            m_protocol_queue.push_back(p);
         endfunction
         
         virtual function void populate ();
@@ -155,7 +157,7 @@ package svutest_test_pkg;
         endfunction
         
         virtual task run ();
-            process agent_pid [] = new [m_agent_queue.size()];
+            process agent_pid [] = new [m_protocol_queue.size()];
             process clk_pid = null;
             process rst_pid = null;
             process exit_pid = null;
@@ -170,20 +172,18 @@ package svutest_test_pkg;
             
             wait (m_vif_test_ctrl.start === 1'b1);
             
-            populate();
-            
             // Start agents so that they can drive signals for time = 0
-            for (int unsigned i = 0 ; i < m_agent_queue.size() ; i++) begin
+            for (int unsigned i = 0 ; i < m_protocol_queue.size() ; i++) begin
                 fork
                     automatic int unsigned index = i;
                     
                     begin
                         agent_pid[index] = process::self();
-                        m_agent_queue[index].run();
+                        m_protocol_queue[index].run();
                     end
                 join_none
             end
-            for (int unsigned i = 0 ; i < m_agent_queue.size() ; i++) begin
+            for (int unsigned i = 0 ; i < m_protocol_queue.size() ; i++) begin
                 wait (agent_pid[i] != null);
             end
             
@@ -212,11 +212,7 @@ package svutest_test_pkg;
             
             rst_pid.await();
             
-            // The agents would be in pause state when we reach this line.
-            // Resume them so that they can start injecting the workload
-            for (int unsigned i = 0 ; i < m_agent_queue.size() ; i++) begin
-                m_agent_queue[i].resume();
-            end
+            populate();
             
             // Detect hang
             timed_out = 1'b0;

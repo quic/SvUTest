@@ -1,152 +1,217 @@
+// Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+// SPDX-License-Identifier: BSD-3-Clause-Clear
+
 package svutest_agent_pkg;
-    import svutest_driver_pkg::*;
-    
-    class agent;
-        local semaphore m_sem;
-        
-        function new ();
-            m_sem = new(0);
-        endfunction
-        
-        task resume ();
-            m_sem.put();
-        endtask
-        
-        task pause ();
-            m_sem.get();
-        endtask
-        
-        virtual task run ();
-            
-        endtask
+    interface class protocol;
+        pure virtual task clear ();
+        pure virtual task run ();
     endclass
     
-    /// Injector for DUT input
-    class injector #(
-        type T_vif = bit,
-        type T_driver = bit
-    ) extends agent;
-        typedef T_driver::T_sender_packet T_sender_packet;
+    class injector_queue #(type T_payload);
+        typedef struct {
+            bit         valid;
+            T_payload   payload;
+        } T_queue_type;
         
-        T_sender_packet m_queue [$];
-        T_driver m_driver;
+        protected T_queue_type m_queue [$];
         
-        static function injector#(T_vif, T_driver) create (T_vif vif);
-            injector#(T_vif, T_driver) ag;
-            
-            ag = new(vif);
-            
-            return ag;
+        function new ();
+            m_queue = {};
         endfunction
+        
+        function void put (T_payload payload);
+            T_queue_type queue_entry;
+            
+            queue_entry = '{
+                valid:      1'b1,
+                payload:    payload
+            };
+            
+            m_queue.push_back(queue_entry);
+        endfunction
+        
+        function void put_delay ();
+            T_queue_type queue_entry;
+            
+            queue_entry = '{
+                valid:      1'b0,
+                payload:    'x
+            };
+            
+            m_queue.push_back(queue_entry);
+        endfunction
+    endclass
+    
+    class valid_ready_injector #(
+        type T_payload = logic
+    ) extends injector_queue#(T_payload) implements protocol;
+        typedef virtual svutest_req_payload_rsp_if#(T_payload).sender T_vif;
+        
+        local T_vif m_vif;
         
         function new (T_vif vif);
             super.new();
             
-            m_queue = {};
-            m_driver = T_driver::create(vif);
+            m_vif = vif;
         endfunction
         
-        function void put (T_sender_packet packet);
-            m_queue.push_back(packet);
-        endfunction
+        virtual task clear ();
+            m_vif.req <= 1'b0;
+            m_vif.req_payload <= 'x;
+        endtask
         
-        task run ();
-            m_driver.sender_clear();
+        virtual task run ();
+            this.clear();
             
-            this.pause();
-            
-            while ($size(m_queue) != 0) begin
-                m_driver.sender_drive(m_queue.pop_front());
+            forever begin
+                T_queue_type queue_entry;
+                
+                wait (m_queue.size() != 0);
+                
+                queue_entry = m_queue.pop_front();
+                
+                if (queue_entry.valid) begin
+                    m_vif.req <= 1'b1;
+                    m_vif.req_payload <= queue_entry.payload;
+                    
+                    @(posedge m_vif.clk iff (!m_vif.rst && m_vif.rsp));
+                end else begin
+                    m_vif.req <= 1'b0;
+                    m_vif.req_payload <= 'x;
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end
+                
+                this.clear();
             end
         endtask
     endclass
     
-    /// Sinks DUT output transactions
-    /// Also provides required back-pressure
-    class extractor #(
-        type T_payload = bit,
-        type T_vif = bit,
-        type T_driver = bit
-    ) extends agent;
-        typedef T_driver::T_target_packet T_target_packet;
-        typedef T_driver::T_sender_packet T_sender_packet;
+    class credit_write_injector #(
+        type T_payload = logic
+    ) extends injector_queue#(T_payload) implements protocol;
+        typedef virtual svutest_req_payload_rsp_if#(T_payload).sender T_vif;
         
-        typedef struct packed {
-            time        timestamp;
-            T_payload   payload;
-        } T_mon_packet;
+        local T_vif m_vif;
+        local int unsigned m_credit_count;
         
-        T_mon_packet m_mon_queue [$];
-        T_target_packet m_drv_queue [$];
-        T_driver m_driver;
-        
-        static function extractor#(T_payload, T_vif, T_driver) create (T_vif vif);
-            extractor#(T_payload, T_vif, T_driver) ag;
-            
-            ag = new(vif);
-            
-            return ag;
-        endfunction
-        
-        function new (T_vif vif);
+        function new (T_vif vif, int unsigned init_credit_count = 0);
             super.new();
             
-            m_mon_queue = {};
-            m_drv_queue = {};
-            m_driver = T_driver::create(vif);
+            m_vif = vif;
+            m_credit_count = init_credit_count;
         endfunction
         
-        function void put (T_target_packet p);
-            m_drv_queue.push_back(p);
-        endfunction
+        virtual task clear ();
+            m_vif.req <= 1'b0;
+            m_vif.req_payload <= 'x;
+        endtask
         
-        task run ();
+        task monitor_credit_release ();
+            forever begin
+                @(posedge clk iff (!rst && m_vif.rsp));
+                
+                m_credit_count <= m_credit_count + 1;
+            end
+        endtask
+        
+        virtual task run ();
             fork
-                begin
-                    forever begin
-                        T_sender_packet packet;
-                        
-                        m_driver.monitor(packet);
-                        m_mon_queue.push_back('{ $time, packet.payload });
-                    end
+                this.monitor_credit_release();
+            join_none
+            
+            this.clear();
+            
+            while (m_queue.size() != 0) begin
+                T_queue_type queue_entry;
+                
+                wait (m_queue.size() != 0);
+                
+                queue_entry = m_queue.pop_front();
+                
+                if (queue_entry.valid) begin
+                    wait (m_credit_count != 0);
+                    
+                    m_vif.req <= 1'b1;
+                    m_vif.req_payload <= queue_entry.payload;
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end else begin
+                    m_vif.req <= 1'b0;
+                    m_vif.req_payload <= 'x;
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
                 end
                 
-                begin
-                    m_driver.target_clear();
-                    
-                    this.pause();
-                    
-                    while ($size(m_drv_queue) != 0) begin
-                        m_driver.target_drive(m_drv_queue.pop_front());
-                    end
-                end
-            join
+                this.clear();
+            end
         endtask
     endclass
     
-    // /// Monitor-only interface for DUT outputs
-    // class monitor_agent #(type T_driver = bit) extends agent;
-    //     typedef T_driver::T_sender_packet T_sender_packet;
-        
-    //     typedef T_sender_packet T_monitor_queue [$];
-        
-    //     T_sender_packet m_mon_queue [$];
-    //     local T_driver m_driver;
-        
-    //     function new (test_case test, T_driver vif);
-    //         super.new(test);
-            
-    //         m_mon_queue = {};
-    //         m_driver = vif;
-    //     endfunction
-        
-    //     task run ();
-    //         forever begin
-    //             T_sender_packet packet;
-                
-    //             m_driver.monitor(packet);
-    //             m_mon_queue.push_back(packet);
-    //         end
-    //     endtask
+    // interface class protocol;
+    //     virtual task clear ();
+    //     virtual task run ();
     // endclass
+    
+    class extractor_queue #(type T_payload);
+        typedef T_payload T_queue [$];
+        
+        protected logic m_rsp_queue [$];
+        protected T_queue m_queue;
+        
+        function new ();
+            m_rsp_queue = {};
+            m_queue = {};
+        endfunction
+        
+        function void put_rsp (logic value);
+            m_rsp_queue.push_back(value);
+        endfunction
+        
+        function T_queue get_queue ();
+            return m_queue;
+        endfunction
+    endclass
+    
+    class valid_ready_extractor #(
+        type T_payload = logic
+    ) extends extractor_queue#(T_payload) implements protocol;
+        typedef virtual svutest_req_payload_rsp_if#(T_payload).target T_vif;
+        
+        T_vif m_vif;
+        
+        function new (T_vif vif);
+            m_vif = vif;
+        endfunction
+        
+        local task monitor ();
+            forever begin
+                @(posedge m_vif.clk iff (!m_vif.rst && m_vif.req && m_vif.rsp));
+                
+                m_queue.push_back(m_vif.req_payload);
+            end
+        endtask
+        
+        virtual task clear();
+            m_vif.rsp <= 1'b1;
+        endtask
+        
+        virtual task run ();
+            fork
+                this.monitor();
+            join_none
+            
+            this.clear();
+            
+            forever begin
+                wait (m_rsp_queue.size() != 0);
+                
+                m_vif.rsp <= m_rsp_queue.pop_front();
+                
+                @(posedge m_vif.clk iff !m_vif.rst);
+                
+                this.clear();
+            end
+        endtask
+    endclass
 endpackage

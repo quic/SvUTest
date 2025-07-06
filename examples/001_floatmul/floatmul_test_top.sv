@@ -12,9 +12,9 @@ module floatmul_test_top
 );
     svutest_dut_ctrl_if dc ();
     
-    svutest_if_valid_ready#(float32_t) a (dc.clk, dc.rst);
-    svutest_if_valid_ready#(float32_t) b (dc.clk, dc.rst);
-    svutest_if_valid_ready#(float32_t) o (dc.clk, dc.rst);
+    svutest_req_payload_rsp_if#(float32_t) a (dc.clk, dc.rst);
+    svutest_req_payload_rsp_if#(float32_t) b (dc.clk, dc.rst);
+    svutest_req_payload_rsp_if#(float32_t) o (dc.clk, dc.rst);
     
     logic busy;
     
@@ -25,20 +25,20 @@ module floatmul_test_top
         .rst        (dc.rst),
         .busy       (busy),
         
-        .a_valid    (a.valid),
-        .a_payload  (a.payload),
-        .a_ready    (a.ready),
+        .a_valid    (a.req),
+        .a_data     (a.req_payload),
+        .a_ready    (a.rsp),
         
-        .b_valid    (b.valid),
-        .b_payload  (b.payload),
-        .b_ready    (b.ready),
+        .b_valid    (b.req),
+        .b_data     (b.req_payload),
+        .b_ready    (b.rsp),
         
-        .o_valid    (o.valid),
-        .o_payload  (o.payload),
-        .o_ready    (o.ready)
+        .o_valid    (o.req),
+        .o_data     (o.req_payload),
+        .o_ready    (o.rsp)
     );
     
-    always_comb dc.done = ~(a.valid | b.valid | o.valid | busy);
+    always_comb dc.done = ~(a.req | b.req | o.req | busy);
     
     // ---------------------------------------------------------------------- //
     
