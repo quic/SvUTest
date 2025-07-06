@@ -4,7 +4,8 @@
 `include "svutest_defines.svh"
 
 package floatmul_test_pkg;
-    import svutest_agent_pkg::*;
+    import svutest_injector_pkg::*;
+    import svutest_extractor_pkg::*;
     import svutest_test_pkg::*;
     import svutest_pkg::*;
     import floatmul_pkg::*;

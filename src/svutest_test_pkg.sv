@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
 package svutest_test_pkg;
-    import svutest_agent_pkg::*;
+    import svutest_core_pkg::*;
     
     /// Test case base class
     /// All test cases must derive from this class
