@@ -4,24 +4,29 @@
 package svutest_injector_pkg;
     import svutest_core_pkg::*;
     
-    class injector #(type T_payload);
+    class injector #(
+        type T_payload,
+        type T_vif
+    );
         typedef struct {
-            bit         valid;
-            T_payload   payload;
+            bit         req;
+            T_payload   req_payload;
         } T_queue_type;
         
         protected T_queue_type m_queue [$];
+        protected T_vif m_vif;
         
-        function new ();
+        function new (T_vif vif);
             m_queue = {};
+            m_vif = vif;
         endfunction
         
-        function void put (T_payload payload);
+        function void put (T_payload req_payload);
             T_queue_type queue_entry;
             
             queue_entry = '{
-                valid:      1'b1,
-                payload:    payload
+                req:            1'b1,
+                req_payload:    req_payload
             };
             
             m_queue.push_back(queue_entry);
@@ -31,25 +36,20 @@ package svutest_injector_pkg;
             T_queue_type queue_entry;
             
             queue_entry = '{
-                valid:      1'b0,
-                payload:    'x
+                req:            1'b0,
+                req_payload:    'x
             };
             
             m_queue.push_back(queue_entry);
         endfunction
     endclass
     
-    class valid_ready_injector #(
-        type T_payload = logic
-    ) extends injector#(T_payload) implements protocol;
-        typedef virtual svutest_req_payload_rsp_if#(T_payload).sender T_vif;
-        
-        local T_vif m_vif;
+    class valid_data_injector #(type T_payload)
+        extends injector#(T_payload, virtual svutest_req_payload_if#(T_payload).sender)
+        implements protocol;
         
         function new (T_vif vif);
-            super.new();
-            
-            m_vif = vif;
+            super.new(vif);
         endfunction
         
         virtual task clear ();
@@ -67,9 +67,49 @@ package svutest_injector_pkg;
                 
                 queue_entry = m_queue.pop_front();
                 
-                if (queue_entry.valid) begin
+                if (queue_entry.req) begin
                     m_vif.req <= 1'b1;
-                    m_vif.req_payload <= queue_entry.payload;
+                    m_vif.req_payload <= queue_entry.req_payload;
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end else begin
+                    m_vif.req <= 1'b0;
+                    m_vif.req_payload <= 'x;
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end
+                
+                this.clear();
+            end
+        endtask
+    endclass
+    
+    class valid_ready_injector #(type T_payload)
+        extends injector#(T_payload, virtual svutest_req_payload_rsp_if#(T_payload).sender)
+        implements protocol;
+        
+        function new (T_vif vif);
+            super.new(vif);
+        endfunction
+        
+        virtual task clear ();
+            m_vif.req <= 1'b0;
+            m_vif.req_payload <= 'x;
+        endtask
+        
+        virtual task run ();
+            this.clear();
+            
+            forever begin
+                T_queue_type queue_entry;
+                
+                wait (m_queue.size() != 0);
+                
+                queue_entry = m_queue.pop_front();
+                
+                if (queue_entry.req) begin
+                    m_vif.req <= 1'b1;
+                    m_vif.req_payload <= queue_entry.req_payload;
                     
                     @(posedge m_vif.clk iff (!m_vif.rst && m_vif.rsp));
                 end else begin
@@ -84,18 +124,15 @@ package svutest_injector_pkg;
         endtask
     endclass
     
-    class credit_write_injector #(
-        type T_payload = logic
-    ) extends injector#(T_payload) implements protocol;
-        typedef virtual svutest_req_payload_rsp_if#(T_payload).sender T_vif;
+    class credit_write_injector #(type T_payload)
+        extends injector#(T_payload, virtual svutest_req_payload_rsp_if#(T_payload).sender)
+        implements protocol;
         
-        local T_vif m_vif;
         local int unsigned m_credit_count;
         
         function new (T_vif vif, int unsigned init_credit_count = 0);
-            super.new();
+            super.new(vif);
             
-            m_vif = vif;
             m_credit_count = init_credit_count;
         endfunction
         
@@ -126,11 +163,11 @@ package svutest_injector_pkg;
                 
                 queue_entry = m_queue.pop_front();
                 
-                if (queue_entry.valid) begin
+                if (queue_entry.req) begin
                     wait (m_credit_count != 0);
                     
                     m_vif.req <= 1'b1;
-                    m_vif.req_payload <= queue_entry.payload;
+                    m_vif.req_payload <= queue_entry.req_payload;
                     
                     @(posedge m_vif.clk iff !m_vif.rst);
                 end else begin
