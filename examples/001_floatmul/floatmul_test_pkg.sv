@@ -11,16 +11,16 @@ package floatmul_test_pkg;
     import floatmul_pkg::*;
     
     /// Base class for all test-cases of floatmul
-    class floatmul_utest extends test_case;
-        valid_ready_injector#(float32_t) m_a_injector;
-        valid_ready_injector#(float32_t) m_b_injector;
-        valid_ready_extractor#(float32_t) m_o_extractor;
+    virtual class floatmul_utest extends test_case;
+        valid_data_ready_injector#(float32_t) m_a_injector;
+        valid_data_ready_injector#(float32_t) m_b_injector;
+        valid_data_ready_extractor#(float32_t) m_o_extractor;
         
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
             virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
-            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
-            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+            virtual svutest_req_payload_rsp_if#(float32_t).driver vif_a,
+            virtual svutest_req_payload_rsp_if#(float32_t).driver vif_b,
             virtual svutest_req_payload_rsp_if#(float32_t).target vif_o,
             string test_case_name
         );
@@ -41,8 +41,8 @@ package floatmul_test_pkg;
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
             virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
-            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
-            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+            virtual svutest_req_payload_rsp_if#(float32_t).driver vif_a,
+            virtual svutest_req_payload_rsp_if#(float32_t).driver vif_b,
             virtual svutest_req_payload_rsp_if#(float32_t).target vif_o
         );
             super.new(vif_test_ctrl, vif_dut_ctrl, vif_a, vif_b, vif_o, "0_0");
@@ -71,8 +71,8 @@ package floatmul_test_pkg;
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
             virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
-            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
-            virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+            virtual svutest_req_payload_rsp_if#(float32_t).driver vif_a,
+            virtual svutest_req_payload_rsp_if#(float32_t).driver vif_b,
             virtual svutest_req_payload_rsp_if#(float32_t).target vif_o
         );
             super.new(vif_test_ctrl, vif_dut_ctrl, vif_a, vif_b, vif_o, "012_012");

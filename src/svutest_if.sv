@@ -4,33 +4,37 @@
 /// Test control interface
 interface svutest_test_ctrl_if;
     bit start;
-    bit done;
+    bit running;
+    bit complete;
     
     bit timeout;
-    bit unknown;
+    bit unchecked;
     bit pass;
     
     modport driver (
         output start,
-        input done,
+        input running,
+        input complete,
         input timeout,
-        input unknown,
+        input unchecked,
         input pass
     );
     
     modport target (
         input start,
-        output done,
+        output running,
+        output complete,
         output timeout,
-        output unknown,
+        output unchecked,
         output pass
     );
     
     modport monitor (
         input start,
-        input done,
+        input running,
+        input complete,
         input timeout,
-        input unknown,
+        input unchecked,
         input pass
     );
 endinterface
@@ -62,6 +66,34 @@ interface svutest_dut_ctrl_if;
     );
 endinterface
 
+/// Request-payload-response interface
+interface svutest_payload_if
+#(
+    type T_payload = logic
+)(
+    input logic clk,
+    input logic rst
+);
+    T_payload   req_payload;
+    
+    modport driver (
+        input  clk,
+        input  rst,
+        output req_payload
+    );
+    
+    modport target (
+        input  clk,
+        input  rst,
+        input  req_payload
+    );
+    
+    modport snoop (
+        input  clk,
+        input  rst,
+        input  req_payload
+    );
+endinterface
 
 /// Request-payload-response interface
 interface svutest_req_payload_if
@@ -74,7 +106,7 @@ interface svutest_req_payload_if
     logic       req;
     T_payload   req_payload;
     
-    modport sender (
+    modport driver (
         input  clk,
         input  rst,
         output req,
@@ -109,7 +141,7 @@ interface svutest_req_payload_rsp_if
     
     logic       rsp;
     
-    modport sender (
+    modport driver (
         input  clk,
         input  rst,
         output req,

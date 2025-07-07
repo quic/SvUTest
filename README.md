@@ -112,15 +112,15 @@ Once the test_top is built, a ``test_case`` class that drives the input interfac
 
 ```
 class floatmul_utest extends test_case;
-    valid_ready_injector#(float32_t) m_a_injector;
-    valid_ready_injector#(float32_t) m_b_injector;
-    valid_ready_extractor#(float32_t) m_o_extractor;
+    valid_data_ready_injector#(float32_t) m_a_injector;
+    valid_data_ready_injector#(float32_t) m_b_injector;
+    valid_data_ready_extractor#(float32_t) m_o_extractor;
     
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
         virtual svutest_dut_ctrl_if vif_dut_ctrl,
-        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
-        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+        virtual svutest_req_payload_rsp_if#(float32_t).driver vif_a,
+        virtual svutest_req_payload_rsp_if#(float32_t).driver vif_b,
         virtual svutest_req_payload_rsp_if#(float32_t).target vif_o,
         string test_case_name
     );
@@ -139,7 +139,7 @@ endclass
 
 ``sv_utest_pkg`` provides injectors and extractors for 2 different interface protocols:
 1. ``valid_data_injector``: Data with valid
-1. ``valid_ready_injector``: Data with valid and ready
+1. ``valid_data_ready_injector``: Data with valid and ready
 
 An injector or extractor needs to be created per interface, depending on the direction of the transaction. The example above creates two injectors and an extractor inside the class. The constructor of ``test_case`` must attach each injector/extractor to the test case by calling ``add()`` method.
 
@@ -153,8 +153,8 @@ class floatmul_test2_0_0 extends floatmul_utest;
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
         virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
-        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_a,
-        virtual svutest_req_payload_rsp_if#(float32_t).sender vif_b,
+        virtual svutest_req_payload_rsp_if#(float32_t).driver vif_a,
+        virtual svutest_req_payload_rsp_if#(float32_t).driver vif_b,
         virtual svutest_req_payload_rsp_if#(float32_t).target vif_o
     );
         super.new(vif_test_ctrl, vif_dut_ctrl, vif_a, vif_b, vif_o, "0_0");

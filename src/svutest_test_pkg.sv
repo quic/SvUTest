@@ -6,7 +6,7 @@ package svutest_test_pkg;
     
     /// Test case base class
     /// All test cases must derive from this class
-    class test_case;
+    virtual class test_case;
         virtual svutest_test_ctrl_if.target m_vif_test_ctrl;
         virtual svutest_dut_ctrl_if.driver m_vif_dut_ctrl;
         string m_test_name;
@@ -39,9 +39,7 @@ package svutest_test_pkg;
             m_protocol_queue.push_back(p);
         endfunction
         
-        virtual function void populate ();
-            
-        endfunction
+        pure virtual function void populate ();
         
         local task run_clk_gen (bit posedge_clk, bit async_rst);
             m_vif_dut_ctrl.clk <= !posedge_clk;
@@ -61,6 +59,14 @@ package svutest_test_pkg;
             end
             
             while (!m_vif_dut_ctrl.done) begin
+                m_vif_dut_ctrl.clk <= posedge_clk;
+                #500;
+                
+                m_vif_dut_ctrl.clk <= !posedge_clk;
+                #500;
+            end
+            
+            repeat (m_alive_cycles) begin
                 m_vif_dut_ctrl.clk <= posedge_clk;
                 #500;
                 
@@ -139,14 +145,14 @@ package svutest_test_pkg;
             
             if (total_count == 0) begin
                 pass_status_str = unknown_str;
-                m_vif_test_ctrl.unknown = 1'b1;
+                m_vif_test_ctrl.unchecked = 1'b1;
             end else if (m_pass_count == total_count) begin
                 pass_status_str = pass_str;
-                m_vif_test_ctrl.unknown = 1'b0;
+                m_vif_test_ctrl.unchecked = 1'b0;
                 m_vif_test_ctrl.pass = 1'b1;
             end else begin
                 pass_status_str = fail_str;
-                m_vif_test_ctrl.unknown = 1'b0;
+                m_vif_test_ctrl.unchecked = 1'b0;
                 m_vif_test_ctrl.pass = 1'b0;
             end
             
@@ -168,9 +174,10 @@ package svutest_test_pkg;
             
             // -------------------------------------------------------------- //
             
-            m_vif_test_ctrl.done = 1'b0;
+            m_vif_test_ctrl.complete = 1'b0;
             
             wait (m_vif_test_ctrl.start === 1'b1);
+            m_vif_test_ctrl.running = 1'b1;
             
             // Start agents so that they can drive signals for time = 0
             for (int unsigned i = 0 ; i < m_protocol_queue.size() ; i++) begin
@@ -249,7 +256,7 @@ package svutest_test_pkg;
             check();
             report(timed_out);
             
-            m_vif_test_ctrl.done = 1'b1;
+            m_vif_test_ctrl.complete = 1'b1;
         endtask
     endclass
 endpackage

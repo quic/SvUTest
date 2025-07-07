@@ -44,11 +44,83 @@ package svutest_injector_pkg;
         endfunction
     endclass
     
-    class valid_data_injector #(type T_payload)
-        extends injector#(T_payload, virtual svutest_req_payload_if#(T_payload).sender)
+    class level_data_injector #(type T_payload)
+        extends injector#(T_payload, virtual svutest_payload_if#(T_payload).driver)
         implements protocol;
         
-        function new (T_vif vif);
+        function new (virtual svutest_payload_if#(T_payload).driver vif);
+            super.new(vif);
+        endfunction
+        
+        virtual task clear ();
+            m_vif.req_payload <= '0;
+        endtask
+        
+        virtual task run ();
+            this.clear();
+            
+            forever begin
+                T_queue_type queue_entry;
+                
+                wait (m_queue.size() != 0);
+                
+                queue_entry = m_queue.pop_front();
+                
+                if (queue_entry.req) begin
+                    m_vif.req_payload <= queue_entry.req_payload;
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end else begin
+                    this.clear();
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end
+            end
+        endtask
+    endclass
+    
+    class pulse_data_injector #(type T_payload)
+        extends injector#(T_payload, virtual svutest_payload_if#(T_payload).driver)
+        implements protocol;
+        
+        function new (virtual svutest_payload_if#(T_payload).driver vif);
+            super.new(vif);
+        endfunction
+        
+        virtual task clear ();
+            m_vif.req_payload <= '0;
+        endtask
+        
+        virtual task run ();
+            this.clear();
+            
+            forever begin
+                T_queue_type queue_entry;
+                
+                wait (m_queue.size() != 0);
+                
+                queue_entry = m_queue.pop_front();
+                
+                if (queue_entry.req) begin
+                    m_vif.req_payload <= queue_entry.req_payload;
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end else begin
+                    this.clear();
+                    
+                    @(posedge m_vif.clk iff !m_vif.rst);
+                end
+                
+                this.clear();
+            end
+        endtask
+    endclass
+    
+    class valid_data_injector #(type T_payload)
+        extends injector#(T_payload, virtual svutest_req_payload_if#(T_payload).driver)
+        implements protocol;
+        
+        function new (virtual svutest_req_payload_if#(T_payload).driver vif);
             super.new(vif);
         endfunction
         
@@ -73,8 +145,7 @@ package svutest_injector_pkg;
                     
                     @(posedge m_vif.clk iff !m_vif.rst);
                 end else begin
-                    m_vif.req <= 1'b0;
-                    m_vif.req_payload <= 'x;
+                    this.clear();
                     
                     @(posedge m_vif.clk iff !m_vif.rst);
                 end
@@ -84,11 +155,11 @@ package svutest_injector_pkg;
         endtask
     endclass
     
-    class valid_ready_injector #(type T_payload)
-        extends injector#(T_payload, virtual svutest_req_payload_rsp_if#(T_payload).sender)
+    class valid_data_ready_injector #(type T_payload)
+        extends injector#(T_payload, virtual svutest_req_payload_rsp_if#(T_payload).driver)
         implements protocol;
         
-        function new (T_vif vif);
+        function new (virtual svutest_req_payload_rsp_if#(T_payload).driver vif);
             super.new(vif);
         endfunction
         
@@ -113,8 +184,7 @@ package svutest_injector_pkg;
                     
                     @(posedge m_vif.clk iff (!m_vif.rst && m_vif.rsp));
                 end else begin
-                    m_vif.req <= 1'b0;
-                    m_vif.req_payload <= 'x;
+                    this.clear();
                     
                     @(posedge m_vif.clk iff !m_vif.rst);
                 end
@@ -125,12 +195,12 @@ package svutest_injector_pkg;
     endclass
     
     class credit_write_injector #(type T_payload)
-        extends injector#(T_payload, virtual svutest_req_payload_rsp_if#(T_payload).sender)
+        extends injector#(T_payload, virtual svutest_req_payload_rsp_if#(T_payload).driver)
         implements protocol;
         
         local int unsigned m_credit_count;
         
-        function new (T_vif vif, int unsigned init_credit_count = 0);
+        function new (virtual svutest_req_payload_rsp_if#(T_payload).driver vif, int unsigned init_credit_count = 0);
             super.new(vif);
             
             m_credit_count = init_credit_count;

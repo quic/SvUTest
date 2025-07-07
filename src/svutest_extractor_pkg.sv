@@ -31,7 +31,7 @@ package svutest_extractor_pkg;
         endfunction
     endclass
     
-    class valid_ready_extractor #(type T_payload)
+    class valid_data_ready_extractor #(type T_payload)
         extends extractor#(T_payload, virtual svutest_req_payload_rsp_if#(T_payload).target)
         implements protocol;
         
