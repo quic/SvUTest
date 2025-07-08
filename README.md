@@ -229,8 +229,10 @@ Any number of test lists may be created, based on compile time or run time condi
 
 SvUTest framework contains 5 source files:
 ```
-src/svutest_ctrl.sv
-src/svutest_agent_pkg.sv 
+src/svutest_if.sv
+src/svutest_core_pkg.sv
+src/svutest_injector_pkg.sv
+src/svutest_extractor_pkg.sv
 src/svutest_test_pkg.sv 
 src/svutest_pkg.sv
 ```
@@ -241,7 +243,7 @@ src/defines.svh
 The source files must be compiled in the order specified above by the user's eda tool like while the header file is typically picked up by providing the include path. A typical invocation from the command line would be:
 
 ```
-<tool> src/svutest_ctrl.sv src/svutest_agent_pkg.sv src/svutest_test_pkg.sv src/svutest_pkg.sv <include_path_flag> src/ path_to_other_files
+<tool> src/svutest_if.sv src/svutest_core_pkg.sv src/svutest_injector_pkg.sv src/svutest_extractor_pkg.sv src/svutest_test_pkg.sv src/svutest_pkg.sv <include_path_flag> src/ path_to_other_files
 ```
 
 ## Warning
