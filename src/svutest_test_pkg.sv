@@ -24,7 +24,7 @@ package svutest_test_pkg;
             virtual svutest_test_ctrl_if.target vif_tc,
             virtual svutest_dut_ctrl_if.driver vif_dc,
             string test_name,
-            int unsigned num_alive_cycles = 1,
+            int unsigned num_alive_cycles = 2,
             int unsigned timeout_threshold = 1000
         );
             m_vif_test_ctrl = vif_tc;
