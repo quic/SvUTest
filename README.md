@@ -246,10 +246,6 @@ The source files must be compiled in the order specified above by the user's eda
 <tool> src/svutest_if.sv src/svutest_core_pkg.sv src/svutest_injector_pkg.sv src/svutest_extractor_pkg.sv src/svutest_test_pkg.sv src/svutest_pkg.sv <include_path_flag> src/ path_to_other_files
 ```
 
-## Warning
-
-This framework is still in pre-alpha stage.
-
 ## Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
