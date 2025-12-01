@@ -118,7 +118,7 @@ class floatmul_utest extends test_case;
     
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
-        virtual svutest_dut_ctrl_if vif_dut_ctrl,
+        virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
         virtual svutest_req_payload_rsp_if#(float32_t).driver vif_a,
         virtual svutest_req_payload_rsp_if#(float32_t).driver vif_b,
         virtual svutest_req_payload_rsp_if#(float32_t).target vif_o,
