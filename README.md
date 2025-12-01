@@ -10,7 +10,7 @@ SvUTest is an attempt at a tool that helps designers write sanity checks on thei
 
 ## Target Audience
 
-SvUTest is meant to be used by RTL design engineers to ensure basic sanity of small designs across a known set of input patterns. This framework not meant to be a replacement for UVM and is only recommended for small System Verilog modules with a handful of input/output interfaces and a set of input workloads whose output is known. UVM would still be the go-to solution for large designs with complex stimuli.
+SvUTest is meant to be used by RTL design engineers to ensure basic sanity of small designs across a known set of input patterns. This framework is not meant to be a replacement for UVM and is only recommended for small System Verilog modules with a handful of input/output interfaces and a set of input workloads whose output is known. UVM would still be the go-to solution for large designs with complex stimuli.
 
 ## Building a unit test
 
