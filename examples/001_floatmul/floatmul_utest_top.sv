@@ -3,7 +3,7 @@
 
 /// Test top for floatmul
 /// Test case class passed through T_test_case. No ports
-module floatmul_test_top
+module floatmul_utest_top
     import floatmul_pkg::*;
 #(
     type T_test_case = bit

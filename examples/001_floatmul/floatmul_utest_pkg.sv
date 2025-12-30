@@ -3,10 +3,7 @@
 
 `include "svutest_defines.svh"
 
-package floatmul_test_pkg;
-    import svutest_injector_pkg::*;
-    import svutest_extractor_pkg::*;
-    import svutest_test_pkg::*;
+package floatmul_utest_pkg;
     import svutest_pkg::*;
     import floatmul_pkg::*;
     
@@ -37,7 +34,7 @@ package floatmul_test_pkg;
     endclass
     
     /// A = 0, B = 0
-    class floatmul_test2_0_0 extends floatmul_utest;
+    class floatmul_utest_0_0 extends floatmul_utest;
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
             virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
@@ -56,9 +53,9 @@ package floatmul_test_pkg;
         function void check ();
             float32_t queue [$] = m_o_extractor.get_queue();
             
-            `UTEST_ASSERT_EQ(queue.size(), 1)
+            `SVUTEST_ASSERT_EQ(queue.size(), 1)
             
-            `UTEST_ASSERT_EQ(queue[0], '1)
+            `SVUTEST_ASSERT_EQ(queue[0], '1)
         endfunction
     endclass
     
@@ -67,7 +64,7 @@ package floatmul_test_pkg;
     ///     (0, 0) => (0, 1) => (0, 2) =>
     ///     (1, 0) => (1, 1) => (1, 2) =>
     ///     (2, 0) => (2, 1) => (2, 2)
-    class floatmul_test2_012_012 extends floatmul_utest;
+    class floatmul_utest_012_012 extends floatmul_utest;
         function new (
             virtual svutest_test_ctrl_if.target vif_test_ctrl,
             virtual svutest_dut_ctrl_if.driver vif_dut_ctrl,
@@ -103,17 +100,17 @@ package floatmul_test_pkg;
         function void check ();
             float32_t queue [$] = m_o_extractor.get_queue();
             
-            `UTEST_ASSERT_EQ(queue.size(), 9)
+            `SVUTEST_ASSERT_EQ(queue.size(), 9)
             
-            `UTEST_ASSERT_EQ(queue[0], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[1], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[2], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[3], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[4], float32_t'{ sign: 0, exponent: 127, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[5], float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[6], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[7], float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
-            `UTEST_ASSERT_EQ(queue[8], float32_t'{ sign: 0, exponent: 129, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[0], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[1], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[2], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[3], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[4], float32_t'{ sign: 0, exponent: 127, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[5], float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[6], float32_t'{ sign: 0, exponent:   0, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[7], float32_t'{ sign: 0, exponent: 128, mantissa: 0 })
+            `SVUTEST_ASSERT_EQ(queue[8], float32_t'{ sign: 0, exponent: 129, mantissa: 0 })
         endfunction
     endclass
 endpackage
