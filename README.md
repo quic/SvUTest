@@ -61,7 +61,7 @@ endmodule
 
 We start by creating a ``test_top`` module which has a single interface port of type ``svutest_test_ctrl_if.target`` and a single type parameter ``T_test_case``. It instantiates the DUT and calls the ``run()`` method of ``T_Test_case``:
 
-```verilog
+```systemverilog
 module floatmul_test_top
     import floatmul_pkg::*;
 #(
@@ -114,7 +114,7 @@ endmodule
 
 Once the test top is set up, we need to create a test case base class per dut, derived from svutest_pkg::test_case, that accepts the test_ctrl, dut_ctrl and other interfaces:
 
-```verilog
+```systemverilog
 class floatmul_utest extends svutest_pkg::test_case;
     valid_data_ready_injector#(float32_t) m_a_injector;     // Built-in injector for valid-ready protocol (input a)
     valid_data_ready_injector#(float32_t) m_b_injector;     // Injector for input b
@@ -148,7 +148,7 @@ endclass
 
 The next step is to create a test case class per input-output pattern, derived from the base class:
 
-```verilog
+```systemverilog
 class floatmul_utest_0_0 extends floatmul_utest;
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
@@ -186,7 +186,7 @@ endclass
 
 The last step is to create a top module that instantiates the test cases and runs them:
 
-```verilog
+```systemverilog
 module regress_top;
     import svutest_pkg::*;
     import floatmul_utest_pkg::*;

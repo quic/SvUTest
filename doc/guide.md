@@ -12,7 +12,7 @@ SvUTest is meant to be used by RTL design engineers to ensure basic sanity of sm
 
 Let's look at the fibonacci sequence generator module in [examples/002_fibonacci/fibonacci.sv](../examples/002_fibonacci/fibonacci.sv):
 
-```verilog
+```systemverilog
 module fibonacci
 (
     input  logic        clk,
@@ -38,7 +38,7 @@ It has two valid-ready-data interfaces, one for input and one for output, in add
 
 Test top is a wrapper around the DUT and needs to be built once per DUT. The test top for the fibonacci module looks thus:
 
-```verilog
+```systemverilog
 module fibonacci_utest_top
 #(
     type T_test_case = bit
@@ -86,7 +86,7 @@ The test top needs to create an instance of ``T_test_case`` inside an ``initial`
 
 Once the test_top is built, a test case base class that drives the input interfaces and evaluates the output transactions needs to be created by deriving from ``svutest_pkg::test_case``. This class acts as a base class for all test sequences for the current DUT. ``svutest_pkg::test_case`` class drives the clock and reset to the DUT while monitoring the ``done`` in addition to providing hoooks to manage the input and output interfaces of the DUT. The constructor of ``svutest_pkg::test_case`` accepts the svutest_test_ctrl_if interface, svutest_dut_ctrl_if interface and a test name as arguments. The example below creates a base class called ``fibonacci_utest``:
 
-```verilog
+```systemverilog
 virtual class fibonacci_utest extends test_case;
     valid_data_ready_injector#(logic[7:0]) m_in_injector;
     valid_data_ready_extractor#(logic[31:0]) m_out_extractor;
@@ -120,7 +120,7 @@ Once the injectors and extractors are set up, the user needs to extend the base 
 The transactions emitted from the output channels of the DUT are collected by the extractor and populated into an internal queue. This queue can be accessed from using the method ``extractor::get_queue()`` inside the virtual function ``check()``  and queried for correctness. Two macros ``SVUTEST_ASSERT(expr)`` and ``SVUTEST_ASSERT_EQ(expr_lhs, expr_rhs)`` are provided in ``svutest_defines.svh`` to help the user with the line numbers and a summary.
 
 The following snippet shows a test case that tells the DUT to emit five fibonacci numbers and verifies the outputs:
-```verilog
+```systemverilog
 class fibonacci_utest_5 extends fibonacci_utest;
     function new (
         virtual svutest_test_ctrl_if.target vif_test_ctrl,
@@ -161,7 +161,7 @@ Once the test top and test cases are set up, we need to populate a top module wh
 1. Call the ``run()`` method on the test list
 
 Shown below is a sample regression top for two test cases:
-```verilog
+```systemverilog
 module regress_top;
     import svutest_pkg::*;
     import fibonacci_utest_pkg::*;
@@ -234,7 +234,7 @@ The user may derive classes from ``injector`` to drive custom protocols to a DUT
 
 The ``level_data_injector`` drives multiple values on a ``svutest_payload_if``, with each value lasting a clock cycle, while the last value sticks. The following code snippet produces the subsequent transactions on a ``svutest_payload_if``:
 
-```verilog
+```systemverilog
 level_inj.put(5);
 level_inj.put_delay();
 level_inj.put(2);
@@ -246,7 +246,7 @@ level_inj.put(2);
 
 The ``pulse_data_injector`` drives multiple values on a ``svutest_payload_if``, with each value lasting a clock cycle, while the interface is driven to the default value (0) after the last drive. The following code snippet shows how a pulse injector drives values:
 
-```verilog
+```systemverilog
 pulse_inj.put(5);
 pulse_inj.put_delay();
 pulse_inj.put(2);
@@ -258,7 +258,7 @@ pulse_inj.put(2);
 
 The ``valid_data_injector`` drives multiple values on a ``svutest_req_payload_if``, with each value lasting a clock cycle while ``req`` being high. The payload is reset to x after each drive:
 
-```verilog
+```systemverilog
 valid_data_inj.put(5);
 valid_data_inj.put_delay();
 valid_data_inj.put(2);
@@ -270,7 +270,7 @@ valid_data_inj.put(2);
 
 The ``valid_data_ready_injector`` drives values on a ``svutest_req_payload_rsp_if``. On each drive, ``req`` is driven high, while ``req_payload`` is driven the value specified, and both are maintianed until the ``rsp`` is driven high by the DUT. ``req_payload`` is driven x in the absence of a valid drive:
 
-```verilog
+```systemverilog
 valid_data_ready_inj.put(5);
 valid_data_ready_inj.put_delay();
 valid_data_ready_inj.put(2);
@@ -282,7 +282,7 @@ valid_data_ready_inj.put(2);
 
 ``credit_write_injector`` drives values on a ``svutest_req_payload_rsp_if`` by setting ``req`` high for one cycle while driving ``req_payload`` to the specified value. This class has an internal counter that keeps track of the number of pulses received on ``rsp`` (credits) and a drive happens only when this counter is non-zero. This counter is incremented whenever a pulse is received on ``rsp`` and decremented on each drive. ``req_payload`` is driven x in the absence of a ``req``. Initial value of the internal counter can be specified in the constructor to control how many transactions can be sent out before the target sends the first set of credits:
 
-```verilog
+```systemverilog
 credit_write_inj = new(vif, 0); // No initial credits
 credit_write_inj.put(5);
 credit_write_inj.put_delay();
