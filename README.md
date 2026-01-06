@@ -199,13 +199,33 @@ module regress_top;
     // Another test case, using a macro that does the above in one line
     `SVUTEST(floatmul_test_top, floatmul_test2_012_012)
     
+    // Test cases for a different DUT
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_0)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_1)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_2)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_3)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_5)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_8)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_0_2)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_1_5)
+    `SVUTEST(fibonacci_utest_top, fibonacci_utest_2_0_3)
+    
     initial begin
         // Create a test-list
         test_list list = new();
         
-        // Add the two test cases to the list by passing the interfaces to add()
+        // Add the test cases to the list by passing the interfaces to add()
         list.add(i_floatmul_test2_0_0);     
         list.add(i_floatmul_test2_012_012);
+        list.add(i_fibonacci_utest_0);
+        list.add(i_fibonacci_utest_1);
+        list.add(i_fibonacci_utest_2);
+        list.add(i_fibonacci_utest_3);
+        list.add(i_fibonacci_utest_5);
+        list.add(i_fibonacci_utest_8);
+        list.add(i_fibonacci_utest_0_2);
+        list.add(i_fibonacci_utest_1_5);
+        list.add(i_fibonacci_utest_2_0_3);
         
         // Run all tests in the test list
         list.run();
@@ -220,12 +240,21 @@ The ``run()`` task of ``test_list`` outputs one line of summary per test case, s
 ```
         7000 | fmul:0_0> SVUTEST_ASSERT_EQ failed: /usr2/nvettuva/SvUTest/examples/001_floatmul/floatmul_utest_pkg.sv,58: Expected == 0x0, actual == 0x1
         7000 | fmul:0_0> COMPLETE. Assertions: 1/2 [FAIL]
+        7000 | fibonacci:0> COMPLETE. Assertions: 1/1 [PASS]
+        7000 | fibonacci:1> COMPLETE. Assertions: 2/2 [PASS]
+        7000 | fibonacci:2> COMPLETE. Assertions: 3/3 [PASS]
+        8000 | fibonacci:3> COMPLETE. Assertions: 4/4 [PASS]
+        8000 | fibonacci:0_2> COMPLETE. Assertions: 3/3 [PASS]
+       10000 | fibonacci:5> COMPLETE. Assertions: 6/6 [PASS]
+       11000 | fibonacci:1_5> COMPLETE. Assertions: 7/7 [PASS]
+       11000 | fibonacci:2_0_3> COMPLETE. Assertions: 6/6 [PASS]
+       13000 | fibonacci:8> COMPLETE. Assertions: 9/9 [PASS]
        15000 | fmul:012_012> SVUTEST_ASSERT_EQ failed: /usr2/nvettuva/SvUTest/examples/001_floatmul/floatmul_utest_pkg.sv,108: Expected == 0x7f000000, actual == 0x0
        15000 | fmul:012_012> SVUTEST_ASSERT_EQ failed: /usr2/nvettuva/SvUTest/examples/001_floatmul/floatmul_utest_pkg.sv,110: Expected == 0x7f000000, actual == 0x80000000
        15000 | fmul:012_012> SVUTEST_ASSERT_EQ failed: /usr2/nvettuva/SvUTest/examples/001_floatmul/floatmul_utest_pkg.sv,111: Expected == 0x80000000, actual == 0x0
        15000 | fmul:012_012> SVUTEST_ASSERT_EQ failed: /usr2/nvettuva/SvUTest/examples/001_floatmul/floatmul_utest_pkg.sv,113: Expected == 0x80000000, actual == 0x81000000
        15000 | fmul:012_012> COMPLETE. Assertions: 6/10 [FAIL]
-       15000 | Status: FAIL | Total: 2, Unresponsive: 0, Timeout: 0, Unchecked: 0, Fail: 2, Pass: 9
+       15000 | Status: FAIL | Total: 11, Unresponsive: 0, Timeout: 0, Unchecked: 0, Fail: 2, Pass: 9
 ```
 
 ## Compiling and running
