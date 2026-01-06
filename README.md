@@ -19,7 +19,7 @@ SvUTest is meant to help RTL designers ensure the basic sanity of small designs 
 
 Let's say we need to test a module that multiplies two floating point numbers:
 
-```verilog
+```systemverilog
 package floatmul_pkg;
     typedef struct packed {
         logic           sign;
@@ -225,7 +225,7 @@ The ``run()`` task of ``test_list`` outputs one line of summary per test case, s
        15000 | fmul:012_012> SVUTEST_ASSERT_EQ failed: /usr2/nvettuva/SvUTest/examples/001_floatmul/floatmul_utest_pkg.sv,111: Expected == 0x80000000, actual == 0x0
        15000 | fmul:012_012> SVUTEST_ASSERT_EQ failed: /usr2/nvettuva/SvUTest/examples/001_floatmul/floatmul_utest_pkg.sv,113: Expected == 0x80000000, actual == 0x81000000
        15000 | fmul:012_012> COMPLETE. Assertions: 6/10 [FAIL]
-       15000 | Status: FAIL | Total: 11, Unresponsive: 0, Timeout: 0, Unchecked: 0, Fail: 2, Pass: 9
+       15000 | Status: FAIL | Total: 2, Unresponsive: 0, Timeout: 0, Unchecked: 0, Fail: 2, Pass: 9
 ```
 
 ## Compiling and running

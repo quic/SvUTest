@@ -193,6 +193,7 @@ The ``test_list::run()`` method runs all instantiated test cases, in no specific
 ```
         8000 | fibonacci:3> COMPLETE. Assertions: 4/4 [PASS]
        10000 | fibonacci:5> COMPLETE. Assertions: 6/6 [PASS]
+       10000 | Status: PASS | Total: 1, Unresponsive: 0, Timeout: 0, Unchecked: 0, Fail: 0, Pass: 2
 ```
 
 Any number of test lists may be created, based on compile time or run time conditions.
