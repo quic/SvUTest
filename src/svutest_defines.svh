@@ -33,8 +33,8 @@
     end
 
 /// Assert if equality comparison fails
-`define SVUTEST_ASSERT_EQ(expr_expected, expr_actual)                               \
-    if ((expr_expected) === (expr_actual)) begin                                    \
+`define SVUTEST_ASSERT_EQ(expr_actual, expr_expected)                               \
+    if ((expr_actual) === (expr_expected)) begin                                    \
         this.m_pass_count++;                                                        \
     end else begin                                                                  \
         string msg_str;                                                             \
@@ -43,9 +43,9 @@
         end else begin                                                              \
             msg_str = "SVUTEST_ASSERT_EQ failed";                                   \
         end                                                                         \
-        $write("%12t | %0s> %0s: %0s,%0d: Expected == 0x%0h, actual == 0x%0h\n",    \
+        $write("%12t | %0s> %0s: %0s,%0d: Actual == 0x%0h, expected == 0x%0h\n",    \
             $time, m_test_name, msg_str, `__FILE__, `__LINE__,                      \
-            (expr_expected), (expr_actual));                                        \
+            (expr_actual), (expr_expected));                                        \
         this.m_fail_count++;                                                        \
     end
 
